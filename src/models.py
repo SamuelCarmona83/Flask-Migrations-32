@@ -23,6 +23,21 @@ class Diario(db.Model):
     nombre = db.Column(db.String(48), nullable=False)
     autor = db.Column(db.String(48))
 
+    def __init__(self, nombre, autor):
+        self.nombre = nombre
+        self.autor = autor
+
+    @classmethod
+    def new_diary(cls, nombre, autor):
+        new_diary = cls(nombre, autor)
+        db.session.add(new_diary)
+        try:
+            db.session.commit()
+            return new_diary
+        except Exception as error:
+            return None
+
+
     def serialize(self):
         return {
             "id": self.id,

@@ -44,19 +44,26 @@ def handle_hello():
 
 @app.route('/diary', methods=['GET','POST'])
 def handle_diarys():
+    body = request.json
     if(request.method=='GET'):
-        print('Peticion del tipo GET')
+        all_diarys = Diario.query.all()
+        return jsonify(
+            [ diary.serialize() for diary in all_diarys ]
+        )
     else:
-        body = request.data
-        decode = json.loads(body)
-        if "autor" in body:
+        if "autor" not in body:
             return 'No tiene autor!', 400
-        if "nombre" in body:
+        if "nombre" not in body:
             return 'No tiene nombre', 400
         else:
-            return jsonify(decode)  
-  
-    return 
+            # Crear el diario
+            new_row = Diario.new_diary(body['nombre'], body['autor'])
+            if new_row == None:
+                return 'An error occur couldnt create a diary'
+            return jsonify(new_row.serialize())
+            # Si el diario se retorna lo devolvemos
+            #si es None devolvemos un mensaje de error
+    return 'Unexpected', 501
 
 
 
