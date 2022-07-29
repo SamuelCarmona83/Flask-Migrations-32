@@ -42,21 +42,25 @@ def handle_hello():
     return jsonify(response_body), 200
 
 
-@app.route('/diary', methods=['GET','POST'])
-def handle_diarys():
+@app.route('/diaries', methods=['GET','POST'])
+def handle_diaries():
     if(request.method=='GET'):
-        print('Peticion del tipo GET')
+        all_diaries = Diario.query.all()
+        return jsonify(
+            [ diario.serialize() for diario in all_diaries]
+        )
     else:
-        body = request.data
-        decode = json.loads(body)
-        if "autor" in body:
+        body = request.json
+        if "autor" not in body:
             return 'No tiene autor!', 400
-        if "nombre" in body:
+        if "nombre" not in body:
             return 'No tiene nombre', 400
         else:
-            return jsonify(decode)  
-  
-    return 
+            new_row = Diario.new_diary(body["nombre"], body["autor"])
+            if new_row == None:
+                return 'An error has occurd', 500
+            else:
+                return jsonify(new_row.serialize())
 
 
 
