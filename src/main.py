@@ -42,7 +42,7 @@ def handle_hello():
     return jsonify(response_body), 200
 
 
-@app.route('/diary', methods=['GET','POST'])
+@app.route('/diarys', methods=['GET','POST'])
 def handle_diarys():
     body = request.json
     if(request.method=='GET'):
@@ -65,6 +65,13 @@ def handle_diarys():
             #si es None devolvemos un mensaje de error
     return 'Unexpected', 501
 
+@app.route('/diarys/<int:diary_id>', methods=['GET'])
+def get_diary(diary_id):
+    search = Diario.query.filter_by(id=diary_id).one_or_none()
+    if search is not None:
+        return jsonify(search.serialize())
+    else:
+        return "Not Found", 404 
 
 
 
