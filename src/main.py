@@ -48,7 +48,7 @@ def handle_diaries():
         all_diaries = Diario.query.all()
         return jsonify(
             [ diario.serialize() for diario in all_diaries]
-        )
+        ), 200
     else:
         body = request.json
         if "autor" not in body:
@@ -58,10 +58,32 @@ def handle_diaries():
         else:
             new_row = Diario.new_diary(body["nombre"], body["autor"])
             if new_row == None:
-                return 'An error has occurd', 500
+                return 'Un error ha ocurrido, upps!', 500
             else:
-                return jsonify(new_row.serialize())
+                return jsonify(new_row.serialize()), 200
 
+@app.route('/diaries/<int:diary_id>', methods=['GET','PUT','DELETE'])
+def get_diary(diary_id):
+    body = request.json
+    search = Diario.query.get(diary_id)
+    if request.method == 'GET':
+        if search != None:
+            return jsonify(search.serialize()), 200
+        else:
+            return 'No se encontro ese diario', 404
+    elif request.method == 'PUT':
+        updated_diary = search.update(body["nombre"], body["autor"])
+        if(updated_diary != False):
+            return jsonify(updated_diary.serialize()), 200
+        else:
+            return 'No se pudo actualizar el diary', 500
+    elif request.method == 'DELETE':
+        result = search.delete()
+        if result == True:
+            return f'El diario {diary_id} ha sido eliminado con exito!', 200
+        else:
+            return 'Un error ha ocurrido, upps!', 500
+        return 'Eliminar un diario', 200
 
 
 

@@ -38,6 +38,25 @@ class Diario(db.Model):
             print(error)
             return None
 
+    def update(self, nombre, autor):
+        self.nombre = nombre
+        self.autor = autor
+        try:
+            db.session.commit()
+            return self
+        except Exception as error:
+            print(error)
+            return False
+
+    def delete(self):
+        db.session.delete(self)
+        try:
+            db.session.commit()
+            return True
+        except Exception as error:
+            print(error)
+            return False
+
     def serialize(self):
         return {
             "id": self.id,
