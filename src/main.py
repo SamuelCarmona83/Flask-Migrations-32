@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, Diario
+from models import db, User, Diario, Entrada
 #from models import Person
 
 app = Flask(__name__)
@@ -62,7 +62,7 @@ def handle_diaries():
             else:
                 return jsonify(new_row.serialize()), 200
 
-@app.route('/diaries/<int:diary_id>', methods=['GET','PUT','DELETE'])
+@app.route('/diaries/<int:diary_id>', methods=['GET','PATCH','DELETE', 'PUT'])
 def get_diary(diary_id):
     body = request.json
     search = Diario.query.get(diary_id)
@@ -71,7 +71,7 @@ def get_diary(diary_id):
             return jsonify(search.serialize()), 200
         else:
             return 'No se encontro ese diario', 404
-    elif request.method == 'PUT':
+    elif request.method == 'PATCH':
         updated_diary = search.update(body["nombre"], body["autor"])
         if(updated_diary != False):
             return jsonify(updated_diary.serialize()), 200
@@ -81,6 +81,16 @@ def get_diary(diary_id):
         result = search.delete()
         if result == True:
             return f'El diario {diary_id} ha sido eliminado con exito!', 200
+        else:
+            return 'Un error ha ocurrido, upps!', 500
+    elif request.method == 'PUT':
+        if "titulo" not in body:
+            return 'No tiene autor!', 400
+        if "contenido" not in body:
+            return 'No tiene nombre', 400
+        new = Entrada.new_entry(body["titulo"], body["contenido"], search)
+        if new != None:
+            return jsonify(new.serialize())
         else:
             return 'Un error ha ocurrido, upps!', 500
         return 'Eliminar un diario', 200

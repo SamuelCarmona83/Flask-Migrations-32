@@ -1,3 +1,4 @@
+import datetime
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
@@ -22,6 +23,7 @@ class Diario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(48), nullable=False)
     autor = db.Column(db.String(48))
+    entradas = db.relationship('Entrada', backref='diario')
 
     def __init__(self, nombre, autor):
         self.nombre = nombre
@@ -61,5 +63,38 @@ class Diario(db.Model):
         return {
             "id": self.id,
             "nombre": self.nombre,
-            "autor": self.autor
+            "autor": self.autor,
+            "entradas": [ entrada.serialize() for entrada in self.entradas ]
+        }
+
+class Entrada(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(128), nullable=False)
+    contenido = db.Column(db.String(1024))
+    fecha = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    diario_id = db.Column(db.Integer, db.ForeignKey('diario.id'))
+
+    def __init__(self, titulo, contenido, diario):
+        self.titulo = titulo
+        self.contenido = contenido
+        self.diario = diario
+
+    @classmethod
+    def new_entry(cls, titulo, contenido, diario):
+        entrada = cls(titulo, contenido, diario)
+        db.session.add(entrada)
+        try:
+            db.session.commit()
+            return entrada
+        except Exception as error:
+            print(error)
+            return None
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "titulo": self.titulo,
+            "fecha": self.fecha,
+            "contenido": self.contenido,
+            "diario": self.diario_id
         }
