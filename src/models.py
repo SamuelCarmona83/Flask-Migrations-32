@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+import datetime
 
 db = SQLAlchemy()
 
@@ -22,6 +23,7 @@ class Diario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(48), nullable=False)
     autor = db.Column(db.String(48))
+    entradas = db.relationship('Entrada', backref="diario")
 
     def __init__(self, nombre, autor):
         self.nombre = nombre
@@ -61,5 +63,40 @@ class Diario(db.Model):
         return {
             "id": self.id,
             "nombre": self.nombre,
-            "autor": self.autor
+            "autor": self.autor,
+            "entradas": [ entrada.serialize() for entrada in self.entradas ]
+        }
+
+class Entrada(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(120))
+    texto = db.Column(db.String(1024))
+    fecha = db.Column(db.DateTime, default=datetime.datetime.utcnow() )
+    id_diario = db.Column(db.Integer, db.ForeignKey('diario.id'))
+    #diario creada a partir del relationship en Diario y el nombre es el indicado en backref
+
+    def __init__(self, titulo, texto, fecha, diario):
+        self.titulo = titulo
+        self.texto = texto
+        self.fecha = fecha
+        self.diario = diario
+
+    @classmethod
+    def new_entry(cls, titulo, texto, fecha, diario):
+        new_page = cls(titulo, texto, fecha, diario)
+
+        db.session.add(new_page)
+        try:
+            db.session.commit()
+            return new_page
+        except Exception as error:
+            print(error)
+            return None
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "titulo": self.titulo,
+            "texto": self.texto,
+            "fecha": self.fecha,
         }

@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, Diario
+from models import db, User, Diario, Entrada
 #from models import Person
 
 app = Flask(__name__)
@@ -62,7 +62,7 @@ def handle_diaries():
             else:
                 return jsonify(new_row.serialize()), 200
 
-@app.route('/diaries/<int:diary_id>', methods=['GET','PUT','DELETE'])
+@app.route('/diaries/<int:diary_id>', methods=['GET','PATCH','PUT','DELETE'])
 def get_diary(diary_id):
     body = request.json
     search = Diario.query.get(diary_id)
@@ -71,7 +71,7 @@ def get_diary(diary_id):
             return jsonify(search.serialize()), 200
         else:
             return 'No se encontro ese diario', 404
-    elif request.method == 'PUT':
+    elif request.method == 'PATCH':
         updated_diary = search.update(body["nombre"], body["autor"])
         if(updated_diary != False):
             return jsonify(updated_diary.serialize()), 200
@@ -84,9 +84,26 @@ def get_diary(diary_id):
         else:
             return 'Un error ha ocurrido, upps!', 500
         return 'Eliminar un diario', 200
+    elif request.method == 'PUT':
+        body = request.json
+        if "titulo" not in body:
+            return 'No tiene titulo!', 400
+        if "texto" not in body:
+            return 'No tiene texto', 400
+        entrada = Entrada.new_entry(body['titulo'], body['texto'], None, search)
+        if entrada != None:
+            return jsonify(entrada.serialize())
+        else:
+            return 'Ah ocurrido un error al crear la entrada', 500
+        return 'Eliminar un diario', 200
 
-
-
+@app.route('/entrada/<int:entrada>', methods=["GET"])
+def get_entrada(entrada):
+    search = Entrada.query.get(entrada)
+    if search != None:
+        return jsonify(search.serialize()), 200
+    else:
+        return 'No se ha encontrado', 404 
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
